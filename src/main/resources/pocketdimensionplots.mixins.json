@@ -6,9 +6,7 @@
         "EntityMixin", "ServerPlayerMixin",
         "ServerLevelMixin", "ServerLevelAccessor",
         "PlayerListMixin",
-        "PistonStructureResolverMixin",
-        
-        "RingTeleportMixin"
+        "PistonStructureResolverMixin"
     ],
     "injectors": {
         "defaultRequire": 1

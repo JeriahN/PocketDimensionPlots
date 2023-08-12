@@ -1,5 +1,7 @@
 package net.coolsimulations.PocketDimensionPlots;
 
+import D;
+import I;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -9,27 +11,27 @@ import net.coolsimulations.PocketDimensionPlots.config.PocketDimensionPlotsConfi
 import net.coolsimulations.PocketDimensionPlots.config.PocketDimensionPlotsDatabase;
 import net.coolsimulations.PocketDimensionPlots.config.PocketDimensionPlotsDatabase.PlotEntry;
 import net.fabricmc.fabric.api.dimension.v1.FabricDimensions;
-import net.minecraft.ChatFormatting;
-import net.minecraft.core.BlockPos;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.portal.PortalInfo;
-import net.minecraft.world.phys.Vec3;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.text.MutableText;
+import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
+import net.minecraft.util.Identifier;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.world.TeleportTarget;
+import net.minecraft.world.World;
 
 public class PocketDimensionPlotsUtils {
 
-	public static boolean playerHasPlot(Player player) {
+	public static boolean playerHasPlot(PlayerEntity player) {
 		for (PlotEntry plot : PocketDimensionPlotsDatabase.plots)
-			if (plot.playerOwner.equals(player.getUUID()))
+			if (plot.playerOwner.equals(player.getUuid()))
 				return true;
 		return false;
 	}
@@ -41,9 +43,9 @@ public class PocketDimensionPlotsUtils {
 		return false;
 	}
 
-	public static PlotEntry getPlayerPlot(Player player) {
+	public static PlotEntry getPlayerPlot(PlayerEntity player) {
 		for (PlotEntry plot : PocketDimensionPlotsDatabase.plots) {
-			if (plot.playerOwner.equals(player.getUUID()))
+			if (plot.playerOwner.equals(player.getUuid()))
 				return plot;
 		}
 		return null;
@@ -65,17 +67,17 @@ public class PocketDimensionPlotsUtils {
 		return null;
 	}
 
-	public static Component getPlayerDisplayName(MinecraftServer server, UUID player) {
-		Component playerName = Component.literal(Objects.requireNonNull(server.getProfileCache()).get(player).get().getName());
-		if (server.getPlayerList().getPlayer(player) != null)
-			playerName = Objects.requireNonNull(server.getPlayerList().getPlayer(player)).getDisplayName();
+	public static Text getPlayerDisplayName(MinecraftServer server, UUID player) {
+		Text playerName = Text.literal(Objects.requireNonNull(server.getUserCache()).getByUuid(player).get().getName());
+		if (server.getPlayerManager().getPlayer(player) != null)
+			playerName = Objects.requireNonNull(server.getPlayerManager().getPlayer(player)).getDisplayName();
 		return playerName;
 	}
 
-	public static PlotEntry createPlotEntry(Player player, boolean isLargeIsland) {
-		ServerLevel level = Objects.requireNonNull(player.getServer()).getLevel(PocketDimensionPlots.VOID);
+	public static PlotEntry createPlotEntry(PlayerEntity player, boolean isLargeIsland) {
+		ServerWorld level = Objects.requireNonNull(player.getServer()).getWorld(PocketDimensionPlots.VOID);
 		int plotId = PocketDimensionPlotsDatabase.plots.size();
-		PlotEntry entry = new PlotEntry(plotId, player.getUUID(), getNewSpiralPos(plotId), PocketDimensionPlotsConfig.plotBorderRadius);
+		PlotEntry entry = new PlotEntry(plotId, player.getUuid(), getNewSpiralPos(plotId), PocketDimensionPlotsConfig.plotBorderRadius);
 
 		if (!isLargeIsland)
 			createSmallIsland(level, entry);
@@ -86,41 +88,41 @@ public class PocketDimensionPlotsUtils {
 		return entry;
 	}
 
-	public static void teleportPlayerIntoPlot(Player player, PlotEntry plotToEnter) {
-		teleportPlayerIntoPlot(player, plotToEnter, new Vec3(plotToEnter.safePos.getX(), plotToEnter.safePos.getY(), plotToEnter.safePos.getZ()));
+	public static void teleportPlayerIntoPlot(PlayerEntity player, PlotEntry plotToEnter) {
+		teleportPlayerIntoPlot(player, plotToEnter, new Vec3d(plotToEnter.safePos.getX(), plotToEnter.safePos.getY(), plotToEnter.safePos.getZ()));
 	}
 
-	public static void teleportPlayerIntoPlot(Player player, PlotEntry plotToEnter, Vec3 inCoords) {
-		ServerLevel level = Objects.requireNonNull(player.getServer()).getLevel(PocketDimensionPlots.VOID);
-		CompoundTag entityData = ((EntityAccessor) player).getPersistentData();
-		if (player.level().dimension() != PocketDimensionPlots.VOID) {
+	public static void teleportPlayerIntoPlot(PlayerEntity player, PlotEntry plotToEnter, Vec3d inCoords) {
+		ServerWorld level = Objects.requireNonNull(player.getServer()).getWorld(PocketDimensionPlots.VOID);
+		NbtCompound entityData = ((EntityAccessor) player).getPersistentData();
+		if (player.method_48926().getRegistryKey() != PocketDimensionPlots.VOID) {
 			entityData.putDouble("outPlotXPos", player.getX());
 			entityData.putDouble("outPlotYPos", player.getY());
 			entityData.putDouble("outPlotZPos", player.getZ());
-			entityData.putString("outPlotDim", player.level().dimension().location().toString());
+			entityData.putString("outPlotDim", player.method_48926().getRegistryKey().getValue().toString());
 		}
-		player.resetFallDistance();
-		FabricDimensions.teleport(player, level, new PortalInfo(inCoords, player.getDeltaMovement(), player.getYRot(), player.getXRot()));
+		player.onLanding();
+		FabricDimensions.teleport(player, level, new TeleportTarget(inCoords, player.getVelocity(), player.getYaw(), player.getPitch()));
 		entityData.putInt("currentPlot", plotToEnter.plotId);
 		if (PocketDimensionPlotsConfig.teleportEnterMessage) {
-			MutableComponent teleport = Component.translatable(PDPServerLang.langTranslations(player.getServer(), "pdp.commands.pdp.teleport_into_plot"));
-			if (!plotToEnter.playerOwner.equals(player.getUUID()))
-				teleport = Component.translatable(PDPServerLang.langTranslations(player.getServer(), "pdp.commands.pdp.teleport_into_player_plot"), getPlayerDisplayName(player.getServer(), plotToEnter.playerOwner));
-			teleport.withStyle(ChatFormatting.GREEN);
-			player.sendSystemMessage(teleport);
+			MutableText teleport = Text.translatable(PDPServerLang.langTranslations(player.getServer(), "pdp.commands.pdp.teleport_into_plot"));
+			if (!plotToEnter.playerOwner.equals(player.getUuid()))
+				teleport = Text.translatable(PDPServerLang.langTranslations(player.getServer(), "pdp.commands.pdp.teleport_into_player_plot"), getPlayerDisplayName(player.getServer(), plotToEnter.playerOwner));
+			teleport.formatted(Formatting.GREEN);
+			player.sendMessage(teleport);
 		}
 	}
 
-	public static void teleportPlayerOutOfPlot(Player player, String reason) {
-		CompoundTag entityData = ((EntityAccessor) player).getPersistentData();
-		ResourceKey<Level> outLevel = ResourceKey.create(Registries.DIMENSION, new ResourceLocation(entityData.getString("outPlotDim")));
-		Vec3 outCoords = new Vec3(entityData.getDouble("outPlotXPos"), entityData.getDouble("outPlotYPos"), entityData.getDouble("outPlotZPos"));
+	public static void teleportPlayerOutOfPlot(PlayerEntity player, String reason) {
+		NbtCompound entityData = ((EntityAccessor) player).getPersistentData();
+		RegistryKey<World> outLevel = RegistryKey.of(RegistryKeys.WORLD, new Identifier(entityData.getString("outPlotDim")));
+		Vec3d outCoords = new Vec3d(entityData.getDouble("outPlotXPos"), entityData.getDouble("outPlotYPos"), entityData.getDouble("outPlotZPos"));
 		teleportPlayerOutOfPlot(player, outLevel, outCoords, reason);
 	}
 
-	public static void teleportPlayerOutOfPlot(Player player, ResourceKey<Level> outLevel, Vec3 outCoords, String reason) {
-		CompoundTag entityData = ((EntityAccessor) player).getPersistentData();
-		if (player.level().dimension()  == PocketDimensionPlots.VOID) {
+	public static void teleportPlayerOutOfPlot(PlayerEntity player, RegistryKey<World> outLevel, Vec3d outCoords, String reason) {
+		NbtCompound entityData = ((EntityAccessor) player).getPersistentData();
+		if (player.method_48926().getRegistryKey()  == PocketDimensionPlots.VOID) {
 			if (playerHasPlot(player)) {
 				if (entityData.getInt("currentPlot") == Objects.requireNonNull(getPlayerPlot(player)).plotId) {
 					entityData.putDouble("inPlotXPos", player.getX());
@@ -130,26 +132,26 @@ public class PocketDimensionPlotsUtils {
 			}
 			entityData.putInt("currentPlot", -1);
 		}
-		player.resetFallDistance();
-		FabricDimensions.teleport(player, Objects.requireNonNull(player.getServer()).getLevel(outLevel), new PortalInfo(outCoords, player.getDeltaMovement(), player.getYRot(), player.getXRot()));
+		player.onLanding();
+		FabricDimensions.teleport(player, Objects.requireNonNull(player.getServer()).getWorld(outLevel), new TeleportTarget(outCoords, player.getVelocity(), player.getYaw(), player.getPitch()));
 		if (PocketDimensionPlotsConfig.teleportExitMessage) {
-			MutableComponent teleport = Component.translatable(PDPServerLang.langTranslations(player.getServer(), "pdp.commands.pdp.teleport_outside_plot" + (!reason.isEmpty() ? "." + reason : reason)));
-			teleport.withStyle(ChatFormatting.GREEN);
-			player.sendSystemMessage(teleport);
+			MutableText teleport = Text.translatable(PDPServerLang.langTranslations(player.getServer(), "pdp.commands.pdp.teleport_outside_plot" + (!reason.isEmpty() ? "." + reason : reason)));
+			teleport.formatted(Formatting.GREEN);
+			player.sendMessage(teleport);
 		}
 	}
 
-	public static void kickOtherPlayersOutOfPlot(Player player, String reason) {
-		CompoundTag entityData = ((EntityAccessor) player).getPersistentData();
+	public static void kickOtherPlayersOutOfPlot(PlayerEntity player, String reason) {
+		NbtCompound entityData = ((EntityAccessor) player).getPersistentData();
 		if (playerHasPlot(player)) {
 			PlotEntry entry = getPlayerPlot(player);
 			assert entry != null;
 			if (entityData.getInt("currentPlot") == entry.plotId) {
-				for (ServerPlayer plotPlayer : Objects.requireNonNull(player.getServer()).getPlayerList().getPlayers()) {
+				for (ServerPlayerEntity plotPlayer : Objects.requireNonNull(player.getServer()).getPlayerManager().getPlayerList()) {
 					if (plotPlayer != player) {
-						CompoundTag plotPlayerData = ((EntityAccessor) plotPlayer).getPersistentData();
-						if (plotPlayer.level().dimension() == PocketDimensionPlots.VOID && plotPlayerData.getInt("currentPlot") != -1)
-							if (plotPlayerData.getInt("currentPlot") == entry.plotId && !entry.getWhitelist().contains(plotPlayer.getUUID()) && !plotPlayer.hasPermissions(player.getServer().getOperatorUserPermissionLevel())) {
+						NbtCompound plotPlayerData = ((EntityAccessor) plotPlayer).getPersistentData();
+						if (plotPlayer.method_48926().getRegistryKey() == PocketDimensionPlots.VOID && plotPlayerData.getInt("currentPlot") != -1)
+							if (plotPlayerData.getInt("currentPlot") == entry.plotId && !entry.getWhitelist().contains(plotPlayer.getUuid()) && !plotPlayer.hasPermissionLevel(player.getServer().getOpPermissionLevel())) {
 								teleportPlayerOutOfPlot(plotPlayer, reason);
 							}
 					}
@@ -158,23 +160,23 @@ public class PocketDimensionPlotsUtils {
 		}
 	}
 
-	public static void createSmallIsland(ServerLevel level, PlotEntry entry) {
+	public static void createSmallIsland(ServerWorld level, PlotEntry entry) {
 		for (int i = (int) entry.centerPos.getX() - (int) (double) (PocketDimensionPlotsConfig.smallIslandXSize / 2); i <= entry.centerPos.getX() + (int) Math.floor((double) PocketDimensionPlotsConfig.smallIslandXSize / 2); i++) {
 			for (int j = (int) entry.centerPos.getZ() - (int) (double) (PocketDimensionPlotsConfig.smallIslandZSize / 2); j <= entry.centerPos.getZ() + (int) Math.floor((double) PocketDimensionPlotsConfig.smallIslandZSize / 2); j++) {
-				level.setBlock(new BlockPos(i, entry.centerPos.getY() - 1, j), PocketDimensionPlotsConfig.smallIslandTopBlock.defaultBlockState(), 3);
+				level.setBlockState(new BlockPos(i, entry.centerPos.getY() - 1, j), PocketDimensionPlotsConfig.smallIslandTopBlock.getDefaultState(), 3);
 				for (int k = (entry.centerPos.getY() - PocketDimensionPlotsConfig.smallIslandYSize); k < (entry.centerPos.getY() - 1); k++) {
-					level.setBlock(new BlockPos(i, k, j), PocketDimensionPlotsConfig.smallIslandMainBlock.defaultBlockState(), 3);
+					level.setBlockState(new BlockPos(i, k, j), PocketDimensionPlotsConfig.smallIslandMainBlock.getDefaultState(), 3);
 				}
 			}
 		}
 	}
 
-	public static void createLargeIsland(ServerLevel level, PlotEntry entry) {
+	public static void createLargeIsland(ServerWorld level, PlotEntry entry) {
 		for (int i = (int) entry.centerPos.getX() - (int) Math.floor((double) PocketDimensionPlotsConfig.largeIslandXSize / 2); i <= entry.centerPos.getX() + (int) Math.floor(PocketDimensionPlotsConfig.largeIslandXSize / 2); i++) {
 			for (int j = (int) entry.centerPos.getZ() - (int) Math.floor((double) PocketDimensionPlotsConfig.largeIslandZSize / 2); j <= entry.centerPos.getZ() + (int) Math.floor(PocketDimensionPlotsConfig.largeIslandZSize / 2); j++) {
-				level.setBlock(new BlockPos(i, entry.centerPos.getY() - 1, j), PocketDimensionPlotsConfig.largeIslandTopBlock.defaultBlockState(), 3);
+				level.setBlockState(new BlockPos(i, entry.centerPos.getY() - 1, j), PocketDimensionPlotsConfig.largeIslandTopBlock.getDefaultState(), 3);
 				for (int k = (entry.centerPos.getY() - PocketDimensionPlotsConfig.largeIslandYSize); k < (entry.centerPos.getY() - 1); k++) {
-					level.setBlock(new BlockPos(i, k, j), PocketDimensionPlotsConfig.largeIslandMainBlock.defaultBlockState(), 3);
+					level.setBlockState(new BlockPos(i, k, j), PocketDimensionPlotsConfig.largeIslandMainBlock.getDefaultState(), 3);
 				}
 			}
 		}

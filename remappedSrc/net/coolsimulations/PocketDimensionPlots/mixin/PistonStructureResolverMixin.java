@@ -10,16 +10,16 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 import net.coolsimulations.PocketDimensionPlots.PocketDimensionPlots;
 import net.coolsimulations.PocketDimensionPlots.config.PocketDimensionPlotsDatabase;
 import net.coolsimulations.PocketDimensionPlots.config.PocketDimensionPlotsDatabase.PlotEntry;
-import net.minecraft.core.BlockPos;
-import net.minecraft.world.level.Level;
-import net.minecraft.world.level.block.piston.PistonStructureResolver;
+import net.minecraft.block.piston.PistonHandler;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 
-@Mixin(PistonStructureResolver.class)
+@Mixin(PistonHandler.class)
 public class PistonStructureResolverMixin {
 
 	@Final
 	@Shadow
-	private Level level;
+	private World level;
 	@Final
 	@Shadow
 	private BlockPos pistonPos;
@@ -28,10 +28,10 @@ public class PistonStructureResolverMixin {
 	private void resolve(CallbackInfoReturnable<Boolean> info) {
 		double closestPlot = Integer.MAX_VALUE;
 
-		if (this.level.dimension() == PocketDimensionPlots.VOID && PocketDimensionPlotsDatabase.plots.size() > 0) {
+		if (this.level.getRegistryKey() == PocketDimensionPlots.VOID && PocketDimensionPlotsDatabase.plots.size() > 0) {
 			PlotEntry pistonPlot = PocketDimensionPlotsDatabase.plots.get(0);
 			for (PlotEntry entry : PocketDimensionPlotsDatabase.plots) {
-				double distanceFromPlot = this.pistonPos.distSqr(entry.centerPos);
+				double distanceFromPlot = this.pistonPos.getSquaredDistance(entry.centerPos);
 				if (distanceFromPlot < closestPlot) {
 					closestPlot = distanceFromPlot;
 					pistonPlot = entry;

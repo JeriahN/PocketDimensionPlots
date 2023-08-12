@@ -8,10 +8,10 @@ import net.fabricmc.api.ModInitializer;
 import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.event.lifecycle.v1.ServerLifecycleEvents;
 import net.fabricmc.loader.api.FabricLoader;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceKey;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.world.level.Level;
+import net.minecraft.registry.RegistryKey;
+import net.minecraft.registry.RegistryKeys;
+import net.minecraft.util.Identifier;
+import net.minecraft.world.World;
 
 public class PocketDimensionPlots implements ModInitializer {
 	
@@ -21,7 +21,7 @@ public class PocketDimensionPlots implements ModInitializer {
 		return instance;
 	}
 
-	public static final ResourceKey<Level> VOID = ResourceKey.create(Registries.DIMENSION, new ResourceLocation(PDPReference.MOD_ID, "void"));
+	public static final RegistryKey<World> VOID = RegistryKey.of(RegistryKeys.WORLD, new Identifier(PDPReference.MOD_ID, "void"));
 
 	@Override
 	public void onInitialize() {

@@ -15,34 +15,34 @@ import net.coolsimulations.PocketDimensionPlots.PocketDimensionPlots;
 import net.coolsimulations.PocketDimensionPlots.PocketDimensionPlotsUtils;
 import net.coolsimulations.PocketDimensionPlots.config.PocketDimensionPlotsConfig;
 import net.coolsimulations.PocketDimensionPlots.config.PocketDimensionPlotsDatabase.PlotEntry;
-import net.minecraft.core.BlockPos;
-import net.minecraft.nbt.CompoundTag;
-import net.minecraft.network.protocol.Packet;
-import net.minecraft.network.protocol.game.ClientboundLevelEventPacket;
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.network.ServerGamePacketListenerImpl;
-import net.minecraft.sounds.SoundSource;
-import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.player.Player;
-import net.minecraft.world.level.Level;
+import net.minecraft.entity.Entity;
+import net.minecraft.entity.damage.DamageSource;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.nbt.NbtCompound;
+import net.minecraft.network.packet.Packet;
+import net.minecraft.network.packet.s2c.play.WorldEventS2CPacket;
+import net.minecraft.server.network.ServerPlayNetworkHandler;
+import net.minecraft.server.network.ServerPlayerEntity;
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.sound.SoundCategory;
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.world.World;
 
-@Mixin(ServerPlayer.class)
-public abstract class ServerPlayerMixin extends Player {
+@Mixin(ServerPlayerEntity.class)
+public abstract class ServerPlayerMixin extends PlayerEntity {
 
-	private ServerLevel localLevel;
+	private ServerWorld localLevel;
 
 	@Shadow
-	ServerGamePacketListenerImpl connection;
+	ServerPlayNetworkHandler connection;
 
-	public ServerPlayerMixin(Level level, BlockPos blockPos, float f, GameProfile gameProfile) {
+	public ServerPlayerMixin(World level, BlockPos blockPos, float f, GameProfile gameProfile) {
 		super(level, blockPos, f, gameProfile);
 	}
 
 	@Inject(at = @At("TAIL"), method = "restoreFrom", cancellable = true)
-	public void restoreFrom(ServerPlayer oldPlayer, boolean alive, CallbackInfo info) {
-		CompoundTag old = ((EntityAccessor) oldPlayer).getPersistentData();
+	public void restoreFrom(ServerPlayerEntity oldPlayer, boolean alive, CallbackInfo info) {
+		NbtCompound old = ((EntityAccessor) oldPlayer).getPersistentData();
 		if (old != null)
 			((EntityAccessor) this).setPersistentData(old);
 	}
@@ -50,7 +50,7 @@ public abstract class ServerPlayerMixin extends Player {
 	@Inject(at = @At("TAIL"), method = "die", cancellable = true)
 	private  void die(DamageSource source, CallbackInfo info) {
 
-		if (this.level().dimension() == PocketDimensionPlots.VOID) {
+		if (this.method_48926().getRegistryKey() == PocketDimensionPlots.VOID) {
 			PlotEntry entry = PocketDimensionPlotsUtils.getPlayerPlot(this);
 			((EntityAccessor) this).getPersistentData().putDouble("inPlotXPos", entry.safePos.getX());
 			((EntityAccessor) this).getPersistentData().putDouble("inPlotYPos", entry.safePos.getY());
@@ -60,25 +60,25 @@ public abstract class ServerPlayerMixin extends Player {
 	}
 
 	@Inject(method = "changeDimension(Lnet/minecraft/server/level/ServerLevel;)Lnet/minecraft/world/entity/Entity;", at = @At("HEAD"))
-	private void captureLevel(ServerLevel level, CallbackInfoReturnable<Entity> info) {
-		if (this.level() instanceof ServerLevel)
-			localLevel = (ServerLevel) this.level();
+	private void captureLevel(ServerWorld level, CallbackInfoReturnable<Entity> info) {
+		if (this.method_48926() instanceof ServerWorld)
+			localLevel = (ServerWorld) this.method_48926();
 	}
 
 	@ModifyArg(method = "changeDimension(Lnet/minecraft/server/level/ServerLevel;)Lnet/minecraft/world/entity/Entity;", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/network/ServerGamePacketListenerImpl;send(Lnet/minecraft/network/protocol/Packet;)V"))
 	private Packet changeDimensionPacket(Packet packet) {
-		if (connection.getPlayer().level().dimension() == PocketDimensionPlots.VOID || localLevel.dimension() == PocketDimensionPlots.VOID) {
-			if (packet instanceof ClientboundLevelEventPacket) {
-				ClientboundLevelEventPacket levelPacket = (ClientboundLevelEventPacket) packet;
-				return new ClientboundLevelEventPacket(0, levelPacket.getPos(), levelPacket.getData(), levelPacket.isGlobalEvent());
+		if (connection.getPlayer().method_48926().getRegistryKey() == PocketDimensionPlots.VOID || localLevel.getRegistryKey() == PocketDimensionPlots.VOID) {
+			if (packet instanceof WorldEventS2CPacket) {
+				WorldEventS2CPacket levelPacket = (WorldEventS2CPacket) packet;
+				return new WorldEventS2CPacket(0, levelPacket.getPos(), levelPacket.getData(), levelPacket.isGlobal());
 			}
 		}
 		return packet;
 	}
 
 	@Inject(method = "changeDimension(Lnet/minecraft/server/level/ServerLevel;)Lnet/minecraft/world/entity/Entity;", at = @At(value = "INVOKE", target = "Lnet/minecraft/server/network/ServerGamePacketListenerImpl;send(Lnet/minecraft/network/protocol/Packet;)V", shift = At.Shift.AFTER))
-	private void changeDimension(ServerLevel level, CallbackInfoReturnable<Entity> cir) {
-		if (connection.getPlayer().level().dimension() == PocketDimensionPlots.VOID || localLevel.dimension() == PocketDimensionPlots.VOID)
-			connection.getPlayer().level().playSound(null, connection.getPlayer().blockPosition(), PocketDimensionPlotsConfig.teleportSound, SoundSource.PLAYERS, 1.0F, 1.0F);
+	private void changeDimension(ServerWorld level, CallbackInfoReturnable<Entity> cir) {
+		if (connection.getPlayer().method_48926().getRegistryKey() == PocketDimensionPlots.VOID || localLevel.getRegistryKey() == PocketDimensionPlots.VOID)
+			connection.getPlayer().method_48926().playSound(null, connection.getPlayer().getBlockPos(), PocketDimensionPlotsConfig.teleportSound, SoundCategory.PLAYERS, 1.0F, 1.0F);
 	}
 }

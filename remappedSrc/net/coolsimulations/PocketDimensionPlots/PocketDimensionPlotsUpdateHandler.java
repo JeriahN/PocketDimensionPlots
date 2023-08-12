@@ -2,20 +2,19 @@ package net.coolsimulations.PocketDimensionPlots;
 
 import java.net.URL;
 import java.util.Scanner;
-
-import net.minecraft.ChatFormatting;
 import net.minecraft.SharedConstants;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.server.MinecraftServer;
+import net.minecraft.text.MutableText;
+import net.minecraft.text.Text;
+import net.minecraft.util.Formatting;
 
 public class PocketDimensionPlotsUpdateHandler {
 	
 	private static String latestVersion;
 	private static String latestVersionInfo;
 	public static boolean isOld = false;
-	public static MutableComponent updateInfo = null;
-	public static MutableComponent updateVersionInfo = null;
+	public static MutableText updateInfo = null;
+	public static MutableText updateVersionInfo = null;
 	
 	public static void init(MinecraftServer server) {
 		
@@ -43,14 +42,14 @@ public class PocketDimensionPlotsUpdateHandler {
 				
 				isOld = true;
 				
-				MutableComponent iwb = Component.literal(PDPReference.MOD_NAME);
-				iwb.withStyle(ChatFormatting.BLUE);
+				MutableText iwb = Text.literal(PDPReference.MOD_NAME);
+				iwb.formatted(Formatting.BLUE);
 				
-				MutableComponent MCVersion = Component.literal(SharedConstants.getCurrentVersion().getName());
-				MCVersion.withStyle(ChatFormatting.BLUE);
+				MutableText MCVersion = Text.literal(SharedConstants.getGameVersion().getName());
+				MCVersion.formatted(Formatting.BLUE);
 				
-				updateInfo = Component.translatable(PDPServerLang.langTranslations(server, "pdp.update.display3"), iwb, MCVersion);
-				updateInfo.withStyle(ChatFormatting.YELLOW);
+				updateInfo = Text.translatable(PDPServerLang.langTranslations(server, "pdp.update.display3"), iwb, MCVersion);
+				updateInfo.formatted(Formatting.YELLOW);
 				
 			}
 			
@@ -58,20 +57,20 @@ public class PocketDimensionPlotsUpdateHandler {
 				
 				isOld = true;
 				
-				MutableComponent iwb = Component.literal(PDPReference.MOD_NAME);
-				iwb.withStyle(ChatFormatting.BLUE);
+				MutableText iwb = Text.literal(PDPReference.MOD_NAME);
+				iwb.formatted(Formatting.BLUE);
 				
-				MutableComponent version = Component.literal(latestVersion);
-				version.withStyle(ChatFormatting.BLUE);
+				MutableText version = Text.literal(latestVersion);
+				version.formatted(Formatting.BLUE);
 				
-				updateInfo = Component.translatable(PDPServerLang.langTranslations(server, "pdp.update.display1"), iwb, version);
-				updateInfo.withStyle(ChatFormatting.YELLOW);
+				updateInfo = Text.translatable(PDPServerLang.langTranslations(server, "pdp.update.display1"), iwb, version);
+				updateInfo.formatted(Formatting.YELLOW);
 				
 				if(latestVersionInfo != null) {
 
-					updateVersionInfo = Component.literal(latestVersionInfo);
-					updateVersionInfo.withStyle(ChatFormatting.DARK_AQUA);
-					updateVersionInfo.withStyle(ChatFormatting.BOLD);
+					updateVersionInfo = Text.literal(latestVersionInfo);
+					updateVersionInfo.formatted(Formatting.DARK_AQUA);
+					updateVersionInfo.formatted(Formatting.BOLD);
 				}
 				
 			}

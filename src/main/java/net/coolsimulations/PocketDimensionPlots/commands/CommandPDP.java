@@ -6,6 +6,7 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 import com.mojang.authlib.GameProfile;
 import com.mojang.brigadier.Command;
@@ -82,7 +83,7 @@ public class CommandPDP {
 				}))).then(Commands.literal("kick").then(Commands.argument("targets", EntityArgument.players()).suggests((sender, builder) -> {
 					PlayerList playerlist = sender.getSource().getServer().getPlayerList();
 					return SharedSuggestionProvider.suggest(playerlist.getPlayers().stream().filter((player) -> {
-						if (player != sender.getSource().getPlayer() && player.getLevel().dimension() == PocketDimensionPlots.VOID) {
+						if (player != sender.getSource().getPlayer() && player.level().dimension() == PocketDimensionPlots.VOID) {
 							CompoundTag senderData = ((EntityAccessor) sender.getSource().getPlayer()).getPersistentData();
 							CompoundTag targetData = ((EntityAccessor) player).getPersistentData();
 							if (senderData.getInt("currentPlot") != -1)
@@ -124,14 +125,14 @@ public class CommandPDP {
 
 							MutableComponent add = Component.translatable("commands.whitelist.add.success", new Object[] {PocketDimensionPlotsUtils.getPlayerDisplayName(player.getServer(), otherPlayer.getId())});
 							add.withStyle(ChatFormatting.GREEN);
-							sender.sendSuccess(add, false);
+							sender.sendSuccess((Supplier<Component>) add, false);
 						}
 						else {
 							entry.removePlayerFromWhitelist(otherPlayer.getId());
 
 							MutableComponent add = Component.translatable("commands.whitelist.remove.success", new Object[] {PocketDimensionPlotsUtils.getPlayerDisplayName(player.getServer(), otherPlayer.getId())});
 							add.withStyle(ChatFormatting.GREEN);
-							sender.sendSuccess(add, false);
+							sender.sendSuccess((Supplier<Component>) add, false);
 						}
 					} else {
 						sender.sendFailure(Component.translatable(PDPServerLang.langTranslations(sender.getServer(), "pdp.commands.pdp.no_plot")));
@@ -161,7 +162,7 @@ public class CommandPDP {
 					if (sender.getServer().getPlayerList().getPlayer(otherProfile.getId()) != null) {
 						ServerPlayer otherPlayer = sender.getServer().getPlayerList().getPlayer(otherProfile.getId());
 						CompoundTag otherPlayerData = ((EntityAccessor) otherPlayer).getPersistentData();
-						if (otherPlayer.getLevel().dimension() == PocketDimensionPlots.VOID && otherPlayerData.getInt("currentPlot") != -1) {
+						if (otherPlayer.level().dimension() == PocketDimensionPlots.VOID && otherPlayerData.getInt("currentPlot") != -1) {
 							PlotEntry entry = PocketDimensionPlotsUtils.getPlotFromId(otherPlayerData.getInt("currentPlot"));
 
 							if (entry.getWhitelist().contains(player.getUUID()) || player.hasPermissions(sender.getServer().getOperatorUserPermissionLevel())) {
@@ -171,7 +172,7 @@ public class CommandPDP {
 								requests.put(enter, PocketDimensionPlotsConfig.teleportRequestTimeout * 20);
 								MutableComponent sentRequest = Component.translatable(PDPServerLang.langTranslations(sender.getServer(), "pdp.commands.pdp.enter.send"), new Object[] {otherPlayer.getDisplayName()});
 								sentRequest.withStyle(ChatFormatting.GREEN);
-								sender.sendSuccess(sentRequest, false);
+								sender.sendSuccess((Supplier<Component>) sentRequest, false);
 
 								MutableComponent sendRequest = Component.translatable(PDPServerLang.langTranslations(sender.getServer(), "pdp.commands.pdp.enter.recieve"), new Object[] {sender.getDisplayName(), sender.getDisplayName()});
 								sendRequest.withStyle(ChatFormatting.GREEN);
@@ -233,7 +234,7 @@ public class CommandPDP {
 						PocketDimensionPlotsUtils.teleportPlayerIntoPlot(otherPlayer, enter.getPlot());
 						MutableComponent accept = Component.translatable(PDPServerLang.langTranslations(sender.getServer(), "pdp.commands.pdp.accept"), new Object[] {sender.getDisplayName(), sender.getDisplayName()});
 						accept.withStyle(ChatFormatting.GREEN);
-						sender.sendSuccess(accept, false);
+						sender.sendSuccess((Supplier<Component>) accept, false);
 					} else {
 						sender.sendFailure(Component.translatable(PDPServerLang.langTranslations(sender.getServer(), "pdp.commands.pdp.accept.no_request"), new Object[] {otherPlayer.getDisplayName()}));
 					}
@@ -262,7 +263,7 @@ public class CommandPDP {
 
 				} else {
 					if (!otherPlayer.hasPermissions(sender.getServer().getOperatorUserPermissionLevel())) {
-						if (otherPlayer.getLevel().dimension() == PocketDimensionPlots.VOID) {
+						if (otherPlayer.level().dimension() == PocketDimensionPlots.VOID) {
 
 							if (PocketDimensionPlotsUtils.playerHasPlot(player)) {
 								PlotEntry playerPlot = PocketDimensionPlotsUtils.getPlayerPlot(player);
@@ -270,12 +271,12 @@ public class CommandPDP {
 									PocketDimensionPlotsUtils.teleportPlayerOutOfPlot(otherPlayer, "owner_kicked");
 									MutableComponent kick = Component.translatable(PDPServerLang.langTranslations(sender.getServer(), "pdp.commands.pdp.kick"), new Object[] {otherPlayer.getDisplayName()});
 									kick.withStyle(ChatFormatting.GREEN);
-									sender.sendSuccess(kick, true);
+									sender.sendSuccess((Supplier<Component>) kick, true);
 									return players.size();
 								}
 							}
 
-							if (player.getLevel().dimension() == PocketDimensionPlots.VOID) {
+							if (player.level().dimension() == PocketDimensionPlots.VOID) {
 								if (playerData.getInt("currentPlot") == otherPlayerData.getInt("currentPlot")) {
 									PlotEntry commonPlot = PocketDimensionPlotsUtils.getPlotFromId(playerData.getInt("currentPlot"));
 									if (commonPlot.playerOwner != otherPlayer.getUUID()) {
@@ -286,7 +287,7 @@ public class CommandPDP {
 										else {
 											MutableComponent kick = Component.translatable(PDPServerLang.langTranslations(sender.getServer(), "pdp.commands.pdp.kick"), new Object[] {otherPlayer.getDisplayName()});
 											kick.withStyle(ChatFormatting.GREEN);
-											sender.sendSuccess(kick, true);
+											sender.sendSuccess((Supplier<Component>) kick, true);
 											PocketDimensionPlotsUtils.teleportPlayerOutOfPlot(otherPlayer, "owner_kicked");
 										}
 									}
@@ -314,12 +315,12 @@ public class CommandPDP {
 			CompoundTag playerData = ((EntityAccessor) sender.getPlayer()).getPersistentData();
 			if (PocketDimensionPlotsUtils.playerHasPlot(sender.getPlayer())) {
 				PlotEntry entry = PocketDimensionPlotsUtils.getPlayerPlot(sender.getPlayer());
-				if (sender.getPlayer().getLevel().dimension() == PocketDimensionPlots.VOID && playerData.getInt("currentPlot") == entry.plotId) {
+				if (sender.getPlayer().level().dimension() == PocketDimensionPlots.VOID && playerData.getInt("currentPlot") == entry.plotId) {
 					entry.setSafePos(sender.getPlayer().blockPosition());
 					PocketDimensionPlotsDatabase.save();
 					MutableComponent setSafe = Component.translatable(PDPServerLang.langTranslations(sender.getServer(), "pdp.commands.pdp.set_safe"));
 					setSafe.withStyle(ChatFormatting.GREEN);
-					sender.sendSuccess(setSafe, false);
+					sender.sendSuccess((Supplier<Component>) setSafe, false);
 				} else {
 					sender.sendFailure(Component.translatable(PDPServerLang.langTranslations(sender.getServer(), "pdp.commands.pdp.set_safe.not_owner")));
 				}
@@ -352,7 +353,7 @@ public class CommandPDP {
 		if (sender.getEntity() instanceof ServerPlayer) {
 			ServerPlayer player = (ServerPlayer) sender.getEntity();
 			CompoundTag entityData = ((EntityAccessor) player).getPersistentData();
-			if (player.getLevel().dimension() != PocketDimensionPlots.VOID) {
+			if (player.level().dimension() != PocketDimensionPlots.VOID) {
 				PlotEntry entry;
 				if (PocketDimensionPlotsUtils.playerHasPlot(player)) {
 					entry = PocketDimensionPlotsUtils.getPlayerPlot(player);

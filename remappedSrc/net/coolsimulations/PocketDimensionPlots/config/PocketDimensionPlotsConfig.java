@@ -4,19 +4,17 @@ import java.io.File;
 import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-
+import net.minecraft.block.Block;
+import net.minecraft.block.Blocks;
+import net.minecraft.item.Item;
+import net.minecraft.item.Items;
+import net.minecraft.registry.Registries;
+import net.minecraft.sound.SoundEvent;
+import net.minecraft.sound.SoundEvents;
+import net.minecraft.util.Identifier;
 import com.google.gson.GsonBuilder;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParser;
-
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
-import net.minecraft.sounds.SoundEvent;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.world.item.Item;
-import net.minecraft.world.item.Items;
-import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
 
 public class PocketDimensionPlotsConfig {
 	
@@ -54,7 +52,7 @@ public class PocketDimensionPlotsConfig {
 	public static void init(File fileSrc) {
 
 		teleportItem = Items.FEATHER;
-		teleportSound = SoundEvents.ENDERMAN_TELEPORT;
+		teleportSound = SoundEvents.ENTITY_ENDERMAN_TELEPORT;
 		teleportRequestTimeout = 30;
 		teleportEnterMessage = true;
 		teleportExitMessage = true;
@@ -144,12 +142,12 @@ public class PocketDimensionPlotsConfig {
 	
 	public static JsonObject setJsonObject(JsonObject jsonObject) {
 
-		ResourceLocation teleport_location = BuiltInRegistries.ITEM.getKey(teleportItem);
-		ResourceLocation teleport_sound_location = BuiltInRegistries.SOUND_EVENT.getKey(teleportSound);
-		ResourceLocation small_top_location = BuiltInRegistries.BLOCK.getKey(smallIslandTopBlock);
-		ResourceLocation small_main_location = BuiltInRegistries.BLOCK.getKey(smallIslandMainBlock);
-		ResourceLocation large_top_location = BuiltInRegistries.BLOCK.getKey(largeIslandTopBlock);
-		ResourceLocation large_main_location = BuiltInRegistries.BLOCK.getKey(largeIslandMainBlock);
+		Identifier teleport_location = Registries.ITEM.getId(teleportItem);
+		Identifier teleport_sound_location = Registries.SOUND_EVENT.getId(teleportSound);
+		Identifier small_top_location = Registries.BLOCK.getId(smallIslandTopBlock);
+		Identifier small_main_location = Registries.BLOCK.getId(smallIslandMainBlock);
+		Identifier large_top_location = Registries.BLOCK.getId(largeIslandTopBlock);
+		Identifier large_main_location = Registries.BLOCK.getId(largeIslandMainBlock);
 		
 		jsonObject.addProperty("teleportItem", teleport_location.getNamespace() + ":" + teleport_location.getPath());
 		jsonObject.addProperty("teleportSound", teleport_sound_location.getNamespace() + ":" + teleport_sound_location.getPath());
@@ -183,48 +181,48 @@ public class PocketDimensionPlotsConfig {
 	}
 	
 	public static void setTeleportItem(String location) {
-		if (BuiltInRegistries.ITEM.get(new ResourceLocation(location)) != null) {
-			teleportItem = BuiltInRegistries.ITEM.get(new ResourceLocation(location));
+		if (Registries.ITEM.get(new Identifier(location)) != null) {
+			teleportItem = Registries.ITEM.get(new Identifier(location));
 		} else {
 			teleportItem = Items.FEATHER;
 		}
 	}
 	
 	public static void setTeleportSound(String location) {
-		if (BuiltInRegistries.SOUND_EVENT.get(new ResourceLocation(location)) != null) {
-			teleportSound = BuiltInRegistries.SOUND_EVENT.get(new ResourceLocation(location));
+		if (Registries.SOUND_EVENT.get(new Identifier(location)) != null) {
+			teleportSound = Registries.SOUND_EVENT.get(new Identifier(location));
 		} else {
-			teleportSound = SoundEvents.ENDERMAN_TELEPORT;
+			teleportSound = SoundEvents.ENTITY_ENDERMAN_TELEPORT;
 		}
 	}
 	
 	public static void setSmallTopBlock(String location) {
-		if (BuiltInRegistries.BLOCK.get(new ResourceLocation(location)) != null) {
-			smallIslandTopBlock = BuiltInRegistries.BLOCK.get(new ResourceLocation(location));
+		if (Registries.BLOCK.get(new Identifier(location)) != null) {
+			smallIslandTopBlock = Registries.BLOCK.get(new Identifier(location));
 		} else {
 			smallIslandTopBlock = Blocks.GRASS_BLOCK;
 		}
 	}
 	
 	public static void setSmallMainBlock(String location) {
-		if (BuiltInRegistries.BLOCK.get(new ResourceLocation(location)) != null) {
-			smallIslandMainBlock = BuiltInRegistries.BLOCK.get(new ResourceLocation(location));
+		if (Registries.BLOCK.get(new Identifier(location)) != null) {
+			smallIslandMainBlock = Registries.BLOCK.get(new Identifier(location));
 		} else {
 			smallIslandMainBlock = Blocks.DIRT;
 		}
 	}
 	
 	public static void setLargeTopBlock(String location) {
-		if (BuiltInRegistries.BLOCK.get(new ResourceLocation(location)) != null) {
-			largeIslandTopBlock = BuiltInRegistries.BLOCK.get(new ResourceLocation(location));
+		if (Registries.BLOCK.get(new Identifier(location)) != null) {
+			largeIslandTopBlock = Registries.BLOCK.get(new Identifier(location));
 		} else {
 			largeIslandTopBlock = Blocks.GRASS_BLOCK;
 		}
 	}
 	
 	public static void setLargeMainBlock(String location) {
-		if (BuiltInRegistries.BLOCK.get(new ResourceLocation(location)) != null) {
-			largeIslandMainBlock = BuiltInRegistries.BLOCK.get(new ResourceLocation(location));
+		if (Registries.BLOCK.get(new Identifier(location)) != null) {
+			largeIslandMainBlock = Registries.BLOCK.get(new Identifier(location));
 		} else {
 			largeIslandMainBlock = Blocks.DIRT;
 		}

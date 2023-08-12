@@ -7,7 +7,7 @@ import net.coolsimulations.PocketDimensionPlots.PDPReference;
 import net.fabricmc.api.EnvType;
 import net.fabricmc.api.Environment;
 import net.minecraft.client.gui.screens.Screen;
-import net.minecraft.core.Registry;
+import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.ClickEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
@@ -36,17 +36,17 @@ public class PocketDimensionPlotsConfigGUI {
 		ConfigCategory server = builder.getOrCreateCategory(Component.translatable(PDPReference.CONFIG_CATEGORY_SERVER));
 		ConfigEntryBuilder entryBuilder = builder.entryBuilder();
 
-		ResourceLocation teleport_location = Registry.ITEM.getKey(PocketDimensionPlotsConfig.teleportItem);
-		ResourceLocation feather = Registry.ITEM.getKey(Items.FEATHER);
-		ResourceLocation teleport_sound_location = Registry.SOUND_EVENT.getKey(PocketDimensionPlotsConfig.teleportSound);
-		ResourceLocation enderman = Registry.SOUND_EVENT.getKey(SoundEvents.ENDERMAN_TELEPORT);
-		
-		ResourceLocation small_top_location = Registry.BLOCK.getKey(PocketDimensionPlotsConfig.smallIslandTopBlock);
-		ResourceLocation small_main_location = Registry.BLOCK.getKey(PocketDimensionPlotsConfig.smallIslandMainBlock);
-		ResourceLocation large_top_location = Registry.BLOCK.getKey(PocketDimensionPlotsConfig.largeIslandTopBlock);
-		ResourceLocation large_main_location = Registry.BLOCK.getKey(PocketDimensionPlotsConfig.largeIslandMainBlock);
-		ResourceLocation grass = Registry.BLOCK.getKey(Blocks.GRASS_BLOCK);
-		ResourceLocation dirt = Registry.BLOCK.getKey(Blocks.DIRT);
+		ResourceLocation teleport_location = BuiltInRegistries.ITEM.getKey(PocketDimensionPlotsConfig.teleportItem);
+		ResourceLocation feather = BuiltInRegistries.ITEM.getKey(Items.FEATHER);
+		ResourceLocation teleport_sound_location = BuiltInRegistries.SOUND_EVENT.getKey(PocketDimensionPlotsConfig.teleportSound);
+		ResourceLocation enderman = BuiltInRegistries.SOUND_EVENT.getKey(SoundEvents.ENDERMAN_TELEPORT);
+
+		ResourceLocation small_top_location = BuiltInRegistries.BLOCK.getKey(PocketDimensionPlotsConfig.smallIslandTopBlock);
+		ResourceLocation small_main_location = BuiltInRegistries.BLOCK.getKey(PocketDimensionPlotsConfig.smallIslandMainBlock);
+		ResourceLocation large_top_location = BuiltInRegistries.BLOCK.getKey(PocketDimensionPlotsConfig.largeIslandTopBlock);
+		ResourceLocation large_main_location = BuiltInRegistries.BLOCK.getKey(PocketDimensionPlotsConfig.largeIslandMainBlock);
+		ResourceLocation grass = BuiltInRegistries.BLOCK.getKey(Blocks.GRASS_BLOCK);
+		ResourceLocation dirt = BuiltInRegistries.BLOCK.getKey(Blocks.DIRT);
 		
 		plots.addEntry(entryBuilder.startStrField(Component.translatable("pdp.configgui.teleport_item"), teleport_location.getNamespace() + ":" + teleport_location.getPath()).setTooltip(Component.translatable("pdp.configgui.tooltip.disable_item")).setDefaultValue(feather.getNamespace() + ":" + feather.getPath()).setSaveConsumer(newValue->PocketDimensionPlotsConfig.setTeleportItem(newValue)).build());
 		plots.addEntry(entryBuilder.startStrField(Component.translatable("pdp.configgui.teleport_sound"), teleport_sound_location.getNamespace() + ":" + teleport_sound_location.getPath()).setTooltip(Component.translatable("pdp.configgui.teleport_sound")).setDefaultValue(enderman.getNamespace() + ":" + enderman.getPath()).setSaveConsumer(newValue->PocketDimensionPlotsConfig.setTeleportSound(newValue)).build());

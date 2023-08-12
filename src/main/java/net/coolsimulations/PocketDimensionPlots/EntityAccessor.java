@@ -6,6 +6,6 @@ public interface EntityAccessor {
 	
 	CompoundTag getPersistentData();
 	
-	CompoundTag setPersistentData(CompoundTag tag);
+	void setPersistentData(CompoundTag tag);
 
 }

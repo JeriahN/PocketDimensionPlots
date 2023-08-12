@@ -5,6 +5,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.HashSet;
+import java.util.Objects;
 
 import net.coolsimulations.PocketDimensionPlots.commands.CommandPDP;
 import net.coolsimulations.PocketDimensionPlots.commands.CommandPDP.PlotEnterRequest;
@@ -50,7 +51,7 @@ public class PocketDimensionPlotsEventHandler {
 				if (!world.isClientSide) {
 					if (stack.getItem() == PocketDimensionPlotsConfig.teleportItem) {
 						if(player.canChangeDimensions()) {
-							player.getServer().getCommands().performPrefixedCommand(player.createCommandSourceStack(), "pdp");
+							Objects.requireNonNull(player.getServer()).getCommands().performPrefixedCommand(player.createCommandSourceStack(), "pdp");
 							return InteractionResultHolder.success(stack);
 						}
 					}
@@ -66,7 +67,7 @@ public class PocketDimensionPlotsEventHandler {
 			Path worldSave = Path.of(server.getWorldPath(LevelResource.ROOT).toString(), "serverconfig");
 			try {
 				Files.createDirectories(worldSave);
-			} catch (IOException e) {}
+			} catch (IOException ignored) {}
 			PocketDimensionPlotsDatabase.init(new File(worldSave.toFile(), PDPReference.MOD_ID + "_database.json"));
 		});
 	}
@@ -116,7 +117,7 @@ public class PocketDimensionPlotsEventHandler {
 					expired.withStyle(ChatFormatting.RED);
 
 					if (server.getPlayerList().getPlayer(request.getSender()) != null)
-						server.getPlayerList().getPlayer(request.getSender()).sendSystemMessage(expired);
+						Objects.requireNonNull(server.getPlayerList().getPlayer(request.getSender())).sendSystemMessage(expired);
 				}
 			}
 
@@ -131,14 +132,15 @@ public class PocketDimensionPlotsEventHandler {
 		EntitySleepEvents.ALLOW_SETTING_SPAWN.register((player, sleepingPos) -> {
 
 			CompoundTag playerData = ((EntityAccessor) player).getPersistentData();
-			if (player.getLevel().dimension() == PocketDimensionPlots.VOID) {
+			if (player.level().dimension() == PocketDimensionPlots.VOID) {
 				if (PocketDimensionPlotsConfig.allowBedToSetSpawn) {
 					if (PocketDimensionPlotsUtils.playerHasPlot(player)) {
 						PlotEntry entry = PocketDimensionPlotsUtils.getPlayerPlot(player);
+						assert entry != null;
 						if (playerData.getInt("currentPlot") == entry.plotId) {
 							entry.setSafePos(sleepingPos);
 							PocketDimensionPlotsDatabase.save();
-							MutableComponent setSafe = Component.translatable(PDPServerLang.langTranslations(player.getServer(), "pdp.commands.pdp.set_safe"));
+							MutableComponent setSafe = Component.translatable(PDPServerLang.langTranslations(Objects.requireNonNull(player.getServer()), "pdp.commands.pdp.set_safe"));
 							setSafe.withStyle(ChatFormatting.GREEN);
 							player.sendSystemMessage(setSafe);
 						}
@@ -151,9 +153,10 @@ public class PocketDimensionPlotsEventHandler {
 
 		EntitySleepEvents.ALLOW_SLEEPING.register((player, sleepingPos) -> {
 
-			if (player.getLevel().dimension() == PocketDimensionPlots.VOID) {
-				ServerLevel level = player.getServer().getLevel(Level.OVERWORLD);
+			if (player.level().dimension() == PocketDimensionPlots.VOID) {
+				ServerLevel level = Objects.requireNonNull(player.getServer()).getLevel(Level.OVERWORLD);
 				if (PocketDimensionPlotsConfig.allowSleepingInPlots) {
+					assert level != null;
 					if(level.isDay()) {
 						return Player.BedSleepingProblem.NOT_POSSIBLE_NOW;
 					}	
@@ -167,15 +170,16 @@ public class PocketDimensionPlotsEventHandler {
 		EntitySleepEvents.ALLOW_RESETTING_TIME.register((player) -> {	
 
 			if (PocketDimensionPlotsConfig.allowSleepingInPlots) {
-				if (player.getLevel() instanceof ServerLevel && player instanceof ServerPlayer && player.getLevel().dimension() == PocketDimensionPlots.VOID) {
-					ServerLevel level = player.getServer().getLevel(Level.OVERWORLD);
-					int i = player.getLevel().getGameRules().getInt(GameRules.RULE_PLAYERS_SLEEPING_PERCENTAGE);
-					if (((ServerLevelAccessor) player.getLevel()).getSleepStatus().areEnoughSleeping(i)) {
+				if (player.level() instanceof ServerLevel && player instanceof ServerPlayer && player.level().dimension() == PocketDimensionPlots.VOID) {
+					ServerLevel level = Objects.requireNonNull(player.getServer()).getLevel(Level.OVERWORLD);
+					int i = player.level().getGameRules().getInt(GameRules.RULE_PLAYERS_SLEEPING_PERCENTAGE);
+					if (((ServerLevelAccessor) player.level()).getSleepStatus().areEnoughSleeping(i)) {
+						assert level != null;
 						if (level.getGameRules().getBoolean(GameRules.RULE_DAYLIGHT)) {
 							long l = level.getDayTime() + 24000L;
 							level.setDayTime(l - l % 24000L);
 						}
-						((ServerLevelAccessor) player.getLevel()).wakeUpAllPlayers();
+						((ServerLevelAccessor) player.level()).wakeUpAllPlayers();
 					}
 				}
 			}

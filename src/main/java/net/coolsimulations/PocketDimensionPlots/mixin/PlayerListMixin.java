@@ -21,23 +21,26 @@ import net.minecraft.network.chat.HoverEvent;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.server.players.PlayerList;
 
+import java.util.Objects;
+
 @Mixin(PlayerList.class)
 public class PlayerListMixin {
 
-	@Inject(at = @At("TAIL"), method = "placeNewPlayer", cancellable = true)
+	@Inject(at = @At("TAIL"), method = "placeNewPlayer")
 	public void placeNewPlayer(Connection connection, ServerPlayer player, CallbackInfo info) {
-		if (player.getLevel().dimension() == PocketDimensionPlots.VOID) {
+		if (player.level().dimension() == PocketDimensionPlots.VOID) {
 			CompoundTag entityData = ((EntityAccessor) player).getPersistentData();
 			if (entityData.getInt("currentPlot") != -1) {
 				PlotEntry entry = PocketDimensionPlotsUtils.getPlotFromId(entityData.getInt("currentPlot"));
-				if (!entry.playerOwner.equals(player.getUUID()) && player.getServer().getPlayerList().getPlayer(entry.playerOwner) == null)
+				assert entry != null;
+				if (!entry.playerOwner.equals(player.getUUID()) && Objects.requireNonNull(player.getServer()).getPlayerList().getPlayer(entry.playerOwner) == null)
 					if (!entry.getWhitelist().contains(player.getUUID()) && !player.hasPermissions(player.getServer().getOperatorUserPermissionLevel()))
 						PocketDimensionPlotsUtils.teleportPlayerOutOfPlot(player, "owner_not_online");
 			}
 		}
 
-		if(PocketDimensionPlotsUpdateHandler.isOld == true && !PocketDimensionPlotsConfig.disableUpdateCheck) {
-			if(player.getServer().isDedicatedServer())
+		if(PocketDimensionPlotsUpdateHandler.isOld && !PocketDimensionPlotsConfig.disableUpdateCheck) {
+			if(Objects.requireNonNull(player.getServer()).isDedicatedServer())
 				if(player.hasPermissions(player.getServer().getOperatorUserPermissionLevel()))
 					messageOutdatedPDP(player);
 				else
@@ -45,16 +48,16 @@ public class PlayerListMixin {
 		}
 	}
 
-	@Inject(at = @At("TAIL"), method = "remove", cancellable = true)
+	@Inject(at = @At("TAIL"), method = "remove")
 	public void remove(ServerPlayer player, CallbackInfo info) {
 		PocketDimensionPlotsUtils.kickOtherPlayersOutOfPlot(player, "owner_left_game");
 	}
 
 	@Unique
 	private static void messageOutdatedPDP(ServerPlayer player) {
-		player.sendSystemMessage(PocketDimensionPlotsUpdateHandler.updateInfo.withStyle((style) -> {return style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable(PDPServerLang.langTranslations(player.getServer(), "pdp.update.display2")))).withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://curseforge.com/minecraft/mc-mods/pocketdimensionplots"));}));
+		player.sendSystemMessage(PocketDimensionPlotsUpdateHandler.updateInfo.withStyle((style) -> style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable(PDPServerLang.langTranslations(Objects.requireNonNull(player.getServer()), "pdp.update.display2")))).withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://curseforge.com/minecraft/mc-mods/pocketdimensionplots"))));
 		if(PocketDimensionPlotsUpdateHandler.updateVersionInfo != null)
-			player.sendSystemMessage(PocketDimensionPlotsUpdateHandler.updateVersionInfo.withStyle((style) -> {return style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable(PDPServerLang.langTranslations(player.getServer(), "pdp.update.display2")))).withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://curseforge.com/minecraft/mc-mods/pocketdimensionplots"));}));
+			player.sendSystemMessage(PocketDimensionPlotsUpdateHandler.updateVersionInfo.withStyle((style) -> style.withHoverEvent(new HoverEvent(HoverEvent.Action.SHOW_TEXT, Component.translatable(PDPServerLang.langTranslations(Objects.requireNonNull(player.getServer()), "pdp.update.display2")))).withClickEvent(new ClickEvent(ClickEvent.Action.OPEN_URL, "https://curseforge.com/minecraft/mc-mods/pocketdimensionplots"))));
 	}
 
 }

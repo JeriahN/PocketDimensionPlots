@@ -1,17 +1,16 @@
 package net.coolsimulations.PocketDimensionPlots.mixin;
 
+import net.minecraft.server.world.ServerWorld;
+import net.minecraft.server.world.SleepManager;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Accessor;
 import org.spongepowered.asm.mixin.gen.Invoker;
 
-import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.players.SleepStatus;
-
-@Mixin(ServerLevel.class)
+@Mixin(ServerWorld.class)
 public interface ServerLevelAccessor {
 
 	@Accessor
-	SleepStatus getSleepStatus();
+	SleepManager getSleepStatus();
 
 	@Invoker("wakeUpAllPlayers")
 	void wakeUpAllPlayers();
