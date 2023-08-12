@@ -1,5 +1,5 @@
 plugins {
-	id 'fabric-loom' version '1.0-SNAPSHOT'
+	id 'fabric-loom' version '1.3-SNAPSHOT'
 	id 'maven-publish'
 }
 
@@ -79,13 +79,13 @@ jar {
 	}
 }
 
-task packDev(type: Jar) {
-    from sourceSets.main.output
-    from sourceSets.main.allJava
-    classifier = "Dev"
-    version = "${project.version}"
+tasks.register('packDev', Jar) {
+	from sourceSets.main.output
+	from sourceSets.main.allJava
+	archiveClassifier = "Dev"
+	archiveVersion = "${project.version}"
 
-    println(defaultTasks)
+	println(defaultTasks)
 }
 
 
